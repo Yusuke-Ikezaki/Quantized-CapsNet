@@ -15,11 +15,10 @@ epsilon = 1e-9
 
 
 class CapsNet(object):
-    def __init__(self, is_training=True):
-        self.is_training=is_training
+    def __init__(self):
         self.graph = tf.Graph()
         with self.graph.as_default():
-            if is_training:
+            if cfg.is_training:
                 self.X, self.labels = get_batch_data(cfg.dataset, cfg.batch_size, cfg.num_threads)
                 self.Y = tf.one_hot(self.labels, depth=10, axis=1, dtype=tf.float32)
 
@@ -42,7 +41,7 @@ class CapsNet(object):
     def build_arch(self):
         with tf.variable_scope('Conv1_layer'):
             # Conv1, [batch_size, 20, 20, 256]
-            if self.is_training:
+            if cfg.is_training:
                 conv1 = tf.contrib.layers.conv2d(self.X, num_outputs=256,
                                                 kernel_size=9, stride=1,
                                                 padding='VALID')

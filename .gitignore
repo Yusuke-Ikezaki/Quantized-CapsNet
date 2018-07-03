@@ -114,3 +114,6 @@ results/
 
 # Testing
 convNet.py
+
+# for windows
+.idea/

@@ -113,7 +113,7 @@ logdir/
 results/
 
 # Testing
-convNet.py
+# convNet.py
 
 # for windows
 .idea/

@@ -7,6 +7,7 @@ from tqdm import tqdm
 from config import cfg
 from utils import load_data
 from capsNet import CapsNet
+from convNet import ConvNet
 
 
 def save_to():
@@ -112,7 +113,7 @@ def evaluation(model, supervisor, num_label):
 def main(_):
     tf.logging.info(' Loading Graph...')
     num_label = 10
-    model = CapsNet()
+    model = ConvNet()
     tf.logging.info(' Graph loaded')
 
     sv = tf.train.Supervisor(graph=model.graph, logdir=cfg.logdir, save_model_secs=0)
@@ -126,7 +127,3 @@ def main(_):
 
 if __name__ == "__main__":
     tf.app.run()
-
-'''
-0.9940905448717948
-'''

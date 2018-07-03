@@ -15,10 +15,10 @@ epsilon = 1e-9
 
 
 class CapsNet(object):
-    def __init__(self):
+    def __init__(self, is_training=True):
         self.graph = tf.Graph()
         with self.graph.as_default():
-            if cfg.is_training:
+            if is_training:
                 self.X, self.labels = get_batch_data(cfg.dataset, cfg.batch_size, cfg.num_threads)
                 self.Y = tf.one_hot(self.labels, depth=10, axis=1, dtype=tf.float32)
 
@@ -41,14 +41,14 @@ class CapsNet(object):
     def build_arch(self):
         with tf.variable_scope('Conv1_layer'):
             # Conv1, [batch_size, 20, 20, 256]
-            if cfg.is_training:
-                conv1 = tf.contrib.layers.conv2d(self.X, num_outputs=256,
-                                                kernel_size=9, stride=1,
-                                                padding='VALID')
-            else:
-                w1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Conv1_layer/Conv/weights")[0]
-                qw1 = quantize(w1, bits=cfg.bits)
-                conv1 = tf.nn.conv2d(self.X, qw1, strides=[1, 1, 1, 1], padding='VALID')
+            conv1 = tf.contrib.layers.conv2d(self.X, num_outputs=256, kernel_size=9, stride=1, padding='VALID')
+            '''
+            if not cfg.is_training:
+                with tf.variable_scope('Quantize'):
+                    w1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Conv1_layer/Conv/weights")[0]
+                    qw1 = quantize(w1, bits=cfg.bits)
+                    conv1 = tf.nn.conv2d(self.X, qw1, strides=[1, 1, 1, 1], padding='VALID')
+            '''
             assert conv1.get_shape() == [cfg.batch_size, 20, 20, 256]
 
         # Primary Capsules layer, return [batch_size, 1152, 8, 1]
@@ -247,6 +247,10 @@ def routing(input, b_IJ):
     W = tf.get_variable('Weight', shape=(1, 1152, 160, 8, 1), dtype=tf.float32,
                         initializer=tf.random_normal_initializer(stddev=cfg.stddev))
     biases = tf.get_variable('bias', shape=(1, 1, 10, 16, 1))
+
+    if not cfg.is_training:
+        W = quantize(W, cfg.bits)
+        biases = quantize(biases, cfg.bits)
 
     # Eq.2, calc u_hat
     # Since tf.matmul is a time-consuming op,

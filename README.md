@@ -2,6 +2,8 @@
 
 ## How to use
 
+### Install
+
 ```
 $ git clone https://github.com/Yusuke-Ikezaki/Quantized-CapsNet.git
 ```

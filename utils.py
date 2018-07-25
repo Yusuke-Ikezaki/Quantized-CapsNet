@@ -72,11 +72,50 @@ def load_fashion_mnist(batch_size, is_training=True):
         return teX / 255., teY, num_te_batch
 
 
+def load_cifar10(batch_size, is_training=True):
+    path = os.path.join('data', 'cifar10')
+    path = os.path.join(path, 'cifar-10-batches-bin')
+    if is_training:
+        trainX = []
+        trainY = []
+        for i in range(1, 6):
+            fd = open(os.path.join(path, 'data_batch_{}.bin'.format(i)))
+            loaded = np.fromfile(file=fd, dtype=np.uint8)
+            train = loaded.reshape((10000, -1))
+            trainX.append(train[:, 1:].reshape((-1, 3, 32, 32)).transpose(0, 2, 3, 1))
+            trainY.append(train[:, 0])
+
+        trainX = np.array(trainX).reshape((-1, 32, 32, 3)).astype(np.float32)
+        trainY = np.array(trainY).reshape((-1,)).astype(np.int32)
+
+        trX = trainX[:45000] / 255.
+        trY = trainY[:45000]
+
+        valX = trainX[45000:, ] / 255.
+        valY = trainY[45000:]
+
+        num_tr_batch = 45000 // batch_size
+        num_val_batch = 5000 // batch_size
+
+        return trX, trY, num_tr_batch, valX, valY, num_val_batch
+    else:
+        fd = open(os.path.join(path, 'test_batch.bin'))
+        loaded = np.fromfile(file=fd, dtype=np.uint8)
+        test = loaded.reshape((10000, -1))
+        teX = test[:, 1:].reshape((-1, 3, 32, 32)).transpose(0, 2, 3, 1).astype(np.float)
+        teY = test[:, 0].reshape((-1,)).astype(np.int32)
+
+        num_te_batch = 10000 // batch_size
+        return teX / 255., teY, num_te_batch
+
+
 def load_data(dataset, batch_size, is_training=True, one_hot=False):
     if dataset == 'mnist':
         return load_mnist(batch_size, is_training)
     elif dataset == 'fashion-mnist':
         return load_fashion_mnist(batch_size, is_training)
+    elif dataset == 'cifar10':
+        return load_cifar10(batch_size, is_training)
     else:
         raise Exception('Invalid dataset, please check the name of dataset:', dataset)
 
@@ -86,6 +125,8 @@ def get_batch_data(dataset, batch_size, num_threads):
         trX, trY, num_tr_batch, valX, valY, num_val_batch = load_mnist(batch_size, is_training=True)
     elif dataset == 'fashion-mnist':
         trX, trY, num_tr_batch, valX, valY, num_val_batch = load_fashion_mnist(batch_size, is_training=True)
+    elif dataset == 'cifar10':
+        trX, trY, num_tr_batch, valX, valY, num_val_batch = load_cifar10(batch_size, is_training=True)
     data_queues = tf.train.slice_input_producer([trX, trY])
     X, Y = tf.train.shuffle_batch(data_queues, num_threads=num_threads,
                                   batch_size=batch_size,

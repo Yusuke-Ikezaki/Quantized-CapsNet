@@ -1,6 +1,7 @@
 import os
 import sys
 import gzip
+import tarfile
 import shutil
 from six.moves import urllib
 
@@ -17,6 +18,10 @@ FASHION_MNIST_TRAIN_IMGS_URL = HOMEPAGE + "train-images-idx3-ubyte.gz"
 FASHION_MNIST_TRAIN_LABELS_URL = HOMEPAGE + "train-labels-idx1-ubyte.gz"
 FASHION_MNIST_TEST_IMGS_URL = HOMEPAGE + "t10k-images-idx3-ubyte.gz"
 FASHION_MNIST_TEST_LABELS_URL = HOMEPAGE + "t10k-labels-idx1-ubyte.gz"
+
+# cifar-10 dataset
+HOMEPAGE = "http://www.cs.toronto.edu/~kriz/"
+CIFAR10_URL = HOMEPAGE + "cifar-10-binary.tar.gz"
 
 
 def download_and_uncompress_zip(URL, dataset_dir, force=False):
@@ -35,7 +40,7 @@ def download_and_uncompress_zip(URL, dataset_dir, force=False):
     def download_progress(count, block_size, total_size):
         sys.stdout.write("\r>> Downloading %s %.1f%%" % (filename, float(count * block_size) / float(total_size) * 100.))
         sys.stdout.flush()
-        
+
     if not force and os.path.exists(filepath):
         print("file %s already exist" % (filename))
     else:
@@ -43,12 +48,15 @@ def download_and_uncompress_zip(URL, dataset_dir, force=False):
         print()
         print('Successfully Downloaded', filename)
 
-    # with zipfile.ZipFile(filepath) as fd:
-    with gzip.open(filepath, 'rb') as f_in, open(extract_to, 'wb') as f_out:
-        print('Extracting ', filename)
-        shutil.copyfileobj(f_in, f_out)
-        print('Successfully extracted')
-        print()
+    print('Extracting ', filename)
+    if tarfile.is_tarfile(filepath):
+        tarfile.open(filepath, 'r:gz').extractall(dataset_dir)
+    else:
+        # with zipfile.ZipFile(filepath) as fd:
+        with gzip.open(filepath, 'rb') as f_in, open(extract_to, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    print('Successfully extracted')
+    print()
 
 
 def start_download(dataset, save_to, force):
@@ -64,13 +72,15 @@ def start_download(dataset, save_to, force):
         download_and_uncompress_zip(FASHION_MNIST_TRAIN_LABELS_URL, save_to, force)
         download_and_uncompress_zip(FASHION_MNIST_TEST_IMGS_URL, save_to, force)
         download_and_uncompress_zip(FASHION_MNIST_TEST_LABELS_URL, save_to, force)
+    elif dataset == 'cifar10':
+        download_and_uncompress_zip(CIFAR10_URL, save_to, force)
     else:
         raise Exception("Invalid dataset name! please check it: ", dataset)
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser('Script for automatically downloading datasets')
-    parser.add_argument("--dataset", default='mnist', choices=['mnist', 'fashion-mnist', 'smallNORB'])
+    parser.add_argument("--dataset", default='mnist', choices=['mnist', 'fashion-mnist', 'cifar10'])
     save_to = os.path.join('data', 'mnist')
     parser.add_argument("--save_to", default=save_to)
     parser.add_argument("--force", default=False, type=bool)

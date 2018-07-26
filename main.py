@@ -1,5 +1,4 @@
 import os
-import sys
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -41,7 +40,7 @@ def save_to():
         return(fd_test_acc)
 
 
-def train(model, supervisor, num_label):
+def train(model, supervisor):
     trX, trY, num_tr_batch, valX, valY, num_val_batch = load_data(cfg.dataset, cfg.batch_size, is_training=True)
     Y = valY[:num_val_batch * cfg.batch_size].reshape((-1, 1))
 
@@ -91,7 +90,7 @@ def train(model, supervisor, num_label):
         fd_loss.close()
 
 
-def evaluation(model, supervisor, num_label):
+def evaluation(model, supervisor):
     teX, teY, num_te_batch = load_data(cfg.dataset, cfg.batch_size, is_training=False)
     fd_test_acc = save_to()
     with supervisor.managed_session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
@@ -112,7 +111,6 @@ def evaluation(model, supervisor, num_label):
 
 def main(_):
     tf.logging.info(' Loading Graph...')
-    num_label = 10
     model = ConvNet()
     tf.logging.info(' Graph loaded')
 
@@ -120,10 +118,10 @@ def main(_):
 
     if cfg.is_training:
         tf.logging.info(' Start training...')
-        train(model, sv, num_label)
+        train(model, sv)
         tf.logging.info('Training done')
     else:
-        evaluation(model, sv, num_label)
+        evaluation(model, sv)
 
 if __name__ == "__main__":
     tf.app.run()

@@ -137,6 +137,11 @@ def get_batch_data(dataset, batch_size, num_threads):
     return(X, Y)
 
 
+def rgb_to_gray(images):
+    images = 0.299 * images[:, :, :, 0] + 0.587 * images[:, :, :, 1] + 0.114 * images[:, :, :, 2]
+    return images[:, :, :, np.newaxis]
+
+
 def save_images(imgs, size, path):
     '''
     Args:

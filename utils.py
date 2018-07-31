@@ -165,13 +165,28 @@ def mergeImgs(images, size):
 
 
 def quantize(input, bits=8):
-    if bits > 15:
-        return input
-    elif bits == 1:  # BNN
-        return tf.sign(input)
-    else:
-        SCALE = 2.0 ** (bits - 1)
-        return tf.round(input * SCALE) / SCALE
+    def S(bits):
+      return 2.0 ** (bits - 1)
+
+    def C(x, bits):
+      if bits > 15 or bits == 1:
+        delta = 0.
+      else:
+        delta = 1. / S(bits)
+      MAX = +1 - delta
+      MIN = -1 + delta
+      return tf.clip_by_value(x, MIN, MAX)
+
+    def Q(x, bits):
+        if bits > 15:
+            return x
+        elif bits == 1:  # BNN
+            return tf.sign(x)
+        else:
+            SCALE = S(bits)
+            return tf.round(x * SCALE) / SCALE
+
+    return Q(C(input, bits), bits)
 
 
 # For version compatibility
